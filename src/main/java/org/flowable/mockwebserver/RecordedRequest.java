@@ -29,11 +29,11 @@ import org.microhttp.Request;
  *
  * @author Filip Hrisafov
  */
-public class RecordedRequest {
+public final class RecordedRequest {
 
-    protected final Request request;
+    private final Request request;
 
-    public RecordedRequest(Request request) {
+    RecordedRequest(Request request) {
         this.request = request;
     }
 
@@ -59,6 +59,8 @@ public class RecordedRequest {
     }
 
     /**
+     * The method of the request.
+     *
      * @return the method of the request
      */
     public String method() {
@@ -116,15 +118,20 @@ public class RecordedRequest {
         return new Body(request.body());
     }
 
-    public static class Body {
+    /**
+     * This represents the body of the request.
+     */
+    public static final class Body {
 
-        protected final byte[] bytes;
+        private final byte[] bytes;
 
-        protected Body(byte[] bytes) {
+        private Body(byte[] bytes) {
             this.bytes = bytes;
         }
 
         /**
+         * The body of the request as a string using the UTF-8 charset.
+         *
          * @return the body of the request as a string using the UTF-8 charset.
          */
         public String asString() {
@@ -132,6 +139,9 @@ public class RecordedRequest {
         }
 
         /**
+         * The body of the request as a string using the given charset.
+         *
+         * @param charset the charset to use to parse the body
          * @return the body of the request as a string using give charset
          */
         public String asString(Charset charset) {
@@ -139,6 +149,8 @@ public class RecordedRequest {
         }
 
         /**
+         * The body of the request as a byte array.
+         *
          * @return the body of the request as a byte array
          */
         public byte[] asByteArray() {
@@ -146,8 +158,20 @@ public class RecordedRequest {
         }
     }
 
+    /**
+     * This represents the parsed request URL.
+     *
+     * @param path the path of the request (without the query parameters)
+     * @param queryParameters the query parameters of the request
+     */
     public record RequestUrl(String path, Map<String, String> queryParameters) {
 
+        /**
+         * Create a new instance of the {@link RequestUrl}.
+         *
+         * @param path the path of the request (without the query parameters)
+         * @param queryParameters the query parameters of the request
+         */
         public RequestUrl {
             queryParameters = Collections.unmodifiableMap(queryParameters);
         }

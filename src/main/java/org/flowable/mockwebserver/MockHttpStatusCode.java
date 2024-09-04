@@ -14,6 +14,7 @@ package org.flowable.mockwebserver;
 
 /**
  * Represents an HTTP status code.
+ * This is inspired by the Spring Framework HttpStatusCode interface.
  *
  * @author Filip Hrisafov
  * @see MockHttpStatus for known status codes
@@ -22,11 +23,15 @@ package org.flowable.mockwebserver;
 public sealed interface MockHttpStatusCode permits MockHttpStatus, CustomMockHttpStatus {
 
     /**
+     * The HTTP status code.
+     *
      * @return The HTTP status code
      */
     int code();
 
     /**
+     * The reason for the HTTP status code.
+     *
      * @return The reason for the HTTP status code
      */
     String reason();
@@ -73,6 +78,13 @@ public sealed interface MockHttpStatusCode permits MockHttpStatus, CustomMockHtt
         };
     }
 
+    /**
+     * Create a custom {@link MockHttpStatusCode} with the given code and reason
+     *
+     * @param code the code to create the status for
+     * @param reason the custom reason for the code
+     * @return the custom status
+     */
     static MockHttpStatusCode from(int code, String reason) {
         return new CustomMockHttpStatus(code, reason);
     }

@@ -33,63 +33,73 @@ import org.microhttp.Response;
  *
  * @author Filip Hrisafov
  */
-public class MockResponseBuilder {
+public final class MockResponseBuilder {
 
-    protected static final byte[] EMPTY_BYTE = new byte[0];
+    private static final byte[] EMPTY_BYTE = new byte[0];
 
-    protected MockHttpStatusCode status = MockHttpStatus.OK;
-    protected final Map<String, List<String>> headers = new LinkedHashMap<>();
-    protected byte[] body = EMPTY_BYTE;
-    protected Duration delay;
+    private MockHttpStatusCode status = MockHttpStatus.OK;
+    private final Map<String, List<String>> headers = new LinkedHashMap<>();
+    private byte[] body = EMPTY_BYTE;
+    private Duration delay;
 
-    protected MockResponseBuilder() {
+    private MockResponseBuilder() {
         header("Content-Length", "0");
     }
 
     /**
-     * Create a new builder for a {@link MockResponse} with a default status of {@link MockHttpStatus#OK}
+     * Create a new builder for a {@link MockResponse} with a default status of {@link MockHttpStatus#OK}.
+     *
+     * @return The builder for fluent API
      */
     public static MockResponseBuilder newBuilder() {
         return new MockResponseBuilder();
     }
 
     /**
-     * Set the status of the response to {@link MockHttpStatus#OK}
+     * Set the status of the response to {@link MockHttpStatus#OK}.
+     *
+     * @return The builder for fluent API
      */
     public MockResponseBuilder ok() {
         return status(MockHttpStatus.OK);
     }
 
     /**
-     * Set the status of the response to {@link MockHttpStatus#NOT_FOUND}
+     * Set the status of the response to {@link MockHttpStatus#NOT_FOUND}.
+     *
+     * @return The builder for fluent API
      */
     public MockResponseBuilder notFound() {
         return status(MockHttpStatus.NOT_FOUND);
     }
 
     /**
-     * Set the status of the response to the given code
-     */
-    public MockResponseBuilder responseCode(int code) {
-        return status(MockHttpStatusCode.from(code));
-    }
-
-    /**
-     * Set the status of the response to the given code
+     * Set the status of the response to the given code.
+     *
+     * @param code the status code of the response
+     * @return The builder for fluent API
      */
     public MockResponseBuilder statusCode(int code) {
         return status(MockHttpStatusCode.from(code));
     }
 
     /**
-     * Set the status of the response to the given code and reason
+     * Set the status of the response to the given code and reason.
+     *
+     * @param code the status code of the response
+     * @param reason the reason of the response
+     * @return The builder for fluent API
      */
     public MockResponseBuilder status(int code, String reason) {
         return status(MockHttpStatusCode.from(code, reason));
     }
 
     /**
-     * Set the status of the response
+     * Set the status of the response.
+     *
+     * @param status the status of the response
+     *
+     * @return The builder for fluent API
      */
     public MockResponseBuilder status(MockHttpStatusCode status) {
         if (status == null) {
@@ -105,6 +115,7 @@ public class MockResponseBuilder {
      *
      * @param name the name of the header
      * @param value the value of the header
+     * @return The builder for fluent API
      */
     public MockResponseBuilder header(String name, String value) {
         headers.remove(name);
@@ -112,10 +123,11 @@ public class MockResponseBuilder {
     }
 
     /**
-     * Add a header to the response
+     * Add a header to the response.
      *
      * @param name the name of the header
      * @param value the value of the header
+     * @return The builder for fluent API
      */
     public MockResponseBuilder addHeader(String name, String value) {
         this.headers.computeIfAbsent(name, k -> new ArrayList<>())
@@ -128,6 +140,7 @@ public class MockResponseBuilder {
      * This method will read all the bytes from the body.
      *
      * @param body the input stream to read the bytes from
+     * @return The builder for fluent API
      */
     public MockResponseBuilder body(InputStream body) {
         try {
@@ -142,6 +155,7 @@ public class MockResponseBuilder {
      * This method will read all the bytes from the body.
      *
      * @param body the input stream to read the bytes from
+     * @return The builder for fluent API
      */
     public MockResponseBuilder body(byte[] body) {
         this.body = Arrays.copyOf(body, body.length);
@@ -155,6 +169,7 @@ public class MockResponseBuilder {
      * The charset used is {@link StandardCharsets#UTF_8}.
      *
      * @param body the body of the response
+     * @return The builder for fluent API
      */
     public MockResponseBuilder jsonBody(String body) {
         return jsonBody(body, StandardCharsets.UTF_8);
@@ -166,6 +181,7 @@ public class MockResponseBuilder {
      *
      * @param body the body of the response
      * @param charset the charset of the body
+     * @return The builder for fluent API
      */
     public MockResponseBuilder jsonBody(String body, Charset charset) {
         body(body, charset);
@@ -177,6 +193,7 @@ public class MockResponseBuilder {
      * The charset used is {@link StandardCharsets#UTF_8}.
      *
      * @param body the body of the response
+     * @return The builder for fluent API
      */
     public MockResponseBuilder body(String body) {
         return body(body, StandardCharsets.UTF_8);
@@ -187,6 +204,7 @@ public class MockResponseBuilder {
      *
      * @param body the body of the response
      * @param charset the charset of the body
+     * @return The builder for fluent API
      */
     public MockResponseBuilder body(String body, Charset charset) {
         this.body = body.getBytes(charset);
@@ -200,6 +218,7 @@ public class MockResponseBuilder {
      *
      * @param timeout the timeout of the delay
      * @param timeUnit the time unit of the timeout
+     * @return The builder for fluent API
      */
     public MockResponseBuilder bodyDelay(long timeout, TimeUnit timeUnit) {
         if (timeout <= 0) {
@@ -213,6 +232,7 @@ public class MockResponseBuilder {
      * The delay must be positive.
      *
      * @param delay the delay of the response body
+     * @return The builder for fluent API
      */
     public MockResponseBuilder bodyDelay(Duration delay) {
         if (delay.isNegative() || delay.isZero()) {
@@ -223,7 +243,9 @@ public class MockResponseBuilder {
     }
 
     /**
-     * Build the {@link MockResponse} instance
+     * Build the {@link MockResponse} instance.
+     *
+     * @return the {@link MockResponse} instance
      */
     public MockResponse build() {
         List<Header> headers = new ArrayList<>(this.headers.size());

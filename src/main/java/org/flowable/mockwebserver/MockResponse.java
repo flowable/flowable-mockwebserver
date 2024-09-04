@@ -17,20 +17,24 @@ import java.time.Duration;
 import org.microhttp.Response;
 
 /**
+ * The response that will be returned by the {@link MockWebServer} when a request is made.
+ *
  * @author Filip Hrisafov
  */
-public class MockResponse {
+public final class MockResponse {
 
-    protected final Response response;
-    protected final Duration delay;
+    final Response response;
+    final Duration delay;
 
-    protected MockResponse(Response response, Duration delay) {
+    MockResponse(Response response, Duration delay) {
         this.response = response;
         this.delay = delay;
     }
 
     /**
-     * Create a new builder for a {@link MockResponse} with a default status of {@link MockHttpStatus#OK}
+     * Create a new builder for a {@link MockResponse} with a default status of {@link MockHttpStatus#OK}.
+     *
+     * @return The builder for fluent API
      */
     public static MockResponseBuilder newBuilder() {
         return MockResponseBuilder.newBuilder();

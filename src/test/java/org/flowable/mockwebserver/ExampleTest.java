@@ -125,5 +125,7 @@ class ExampleTest {
                           "type": "dog"
                         }
                         """);
+
+        assertThat(server.requestCount()).isEqualTo(2);
     }
 }

@@ -34,11 +34,11 @@ import org.microhttp.Response;
  *
  * @author Filip Hrisafov
  */
-public class MockWebServer {
+public final class MockWebServer {
 
-    protected final TestHandler handler;
-    protected EventLoop eventLoop;
-    protected Options options;
+    private final TestHandler handler;
+    private EventLoop eventLoop;
+    private Options options;
 
     /**
      * Create a new mock webserver with a queue based response provider.
@@ -103,16 +103,22 @@ public class MockWebServer {
     }
 
     /**
-     * Returns a URL for connecting to this server under the {@code /} path.
+     * The URL for connecting to this server.
+     * This will return something like {@code http://<host>:<port>/}.
+     *
+     * @return a URL for connecting to this server under the {@code /} path.
      */
     public String url() {
         return url("/");
     }
 
     /**
-     * Returns a URL for connecting to this server.
+     * Return a URL for connecting to this server using the given path.
+     * This will return something like {@code http://<host>:<port><path>}.
+     * Note if the path does not start with {@code /} it will be added.
      *
-     * @param path the request path, such as "/".
+     * @param path the request path, such as "/v1".
+     * @return a URL for connecting to this server using the given path.
      */
     public String url(String path) {
         if (eventLoop == null) {
@@ -120,7 +126,7 @@ public class MockWebServer {
         }
 
         try {
-            return "http://" + options.host() + ":" + eventLoop.getPort() + path;
+            return "http://" + options.host() + ":" + eventLoop.getPort() + (path.startsWith("/") ? path : "/" + path);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -228,10 +234,10 @@ public class MockWebServer {
         }
     }
 
-    protected static class QueueResponseProvider implements Function<RecordedRequest, MockResponse> {
+    private static class QueueResponseProvider implements Function<RecordedRequest, MockResponse> {
 
-        protected final BlockingQueue<MockResponse> responseQueue = new LinkedBlockingQueue<>();
-        protected MockResponse defaultResponse;
+        private final BlockingQueue<MockResponse> responseQueue = new LinkedBlockingQueue<>();
+        private MockResponse defaultResponse;
 
         @Override
         public MockResponse apply(RecordedRequest recordedRequest) {
@@ -243,13 +249,13 @@ public class MockWebServer {
         }
     }
 
-    protected static class TestHandler implements Handler {
+    private static class TestHandler implements Handler {
 
-        protected final Function<RecordedRequest, MockResponse> responseProvider;
-        protected final BlockingQueue<RecordedRequest> requestQueue = new LinkedBlockingQueue<>();
-        protected final AtomicLong requestCount = new AtomicLong(0);
+        private final Function<RecordedRequest, MockResponse> responseProvider;
+        private final BlockingQueue<RecordedRequest> requestQueue = new LinkedBlockingQueue<>();
+        private final AtomicLong requestCount = new AtomicLong(0);
 
-        protected TestHandler(Function<RecordedRequest, MockResponse> responseProvider) {
+        private TestHandler(Function<RecordedRequest, MockResponse> responseProvider) {
             this.responseProvider = responseProvider;
         }
 
@@ -264,7 +270,7 @@ public class MockWebServer {
             }
         }
 
-        protected void handle(MockResponse response, Consumer<Response> callback) {
+        private void handle(MockResponse response, Consumer<Response> callback) {
             Duration delay = response.delay;
             if (delay != null) {
                 long sleep = delay.toMillis();
@@ -282,7 +288,7 @@ public class MockWebServer {
 
         }
 
-        protected long requestCount() {
+        private long requestCount() {
             return requestCount.get();
         }
     }
