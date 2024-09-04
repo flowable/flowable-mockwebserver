@@ -1,0 +1,85 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version'
+        required: true
+      next:
+        description: 'Next version'
+        required: false
+
+jobs:
+  release:
+    # This job has been inspired by the moditect release (https://github.com/moditect/moditect/blob/main/.github/workflows/release.yml)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: 'zulu'
+          cache: maven
+
+      - name: Set release version
+        id: version
+        run: |
+          RELEASE_VERSION=${{ github.event.inputs.version }}
+          NEXT_VERSION=${{ github.event.inputs.next }}
+          PLAIN_VERSION=`echo ${RELEASE_VERSION} | awk 'match($0, /^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)/) { print substr($0, RSTART, RLENGTH); }'`
+          COMPUTED_NEXT_VERSION="${PLAIN_VERSION}-SNAPSHOT"
+          if [ -z $NEXT_VERSION ]
+          then
+            NEXT_VERSION=$COMPUTED_NEXT_VERSION
+          fi
+          ./mvnw -ntp -B versions:set versions:commit -DnewVersion=$RELEASE_VERSION -DgenerateBackupPoms=false
+          git config --global user.email "${{ vars.GH_BOT_EMAIL }}"
+          git config --global user.name "GitHub Action"
+          git commit -a -m "Releasing version $RELEASE_VERSION"
+          git push
+          echo "RELEASE_VERSION=$RELEASE_VERSION" >> $GITHUB_ENV
+          echo "NEXT_VERSION=$NEXT_VERSION" >> $GITHUB_ENV
+          echo "PLAIN_VERSION=$PLAIN_VERSION" >> $GITHUB_ENV
+
+      - name: Stage
+        run: |
+          export GPG_TTY=$(tty)
+          ./mvnw -ntp -B --file pom.xml \
+            -Dmaven.site.skip=true -Drelease=true -Ppublication,stage
+
+      - name: Release
+        env:
+          JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          JRELEASER_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+          JRELEASER_GPG_PUBLIC_KEY: ${{ secrets.GPG_PUBLIC_KEY }}
+          JRELEASER_GPG_SECRET_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          JRELEASER_NEXUS2_MAVEN_CENTRAL_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+          JRELEASER_NEXUS2_MAVEN_CENTRAL_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+        run: |
+          ./mvnw -ntp -B --file pom.xml -Pjreleaser jreleaser:release
+
+      - name: JReleaser output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jreleaser-release
+          path: |
+            parent/target/jreleaser/trace.log
+            parent/target/jreleaser/output.properties
+
+      - name: Reset NEXT_RELEASE_CHANGELOG.md
+        run: echo -e "\n" > NEXT_RELEASE_CHANGELOG.md
+
+      - name: Set next version
+        run: |
+          ./mvnw -ntp -B versions:set versions:commit -DnewVersion=${{ env.NEXT_VERSION }} -DgenerateBackupPoms=false
+          sed -i -e "s@project.build.outputTimestamp>.*</project.build.outputTimestamp@project.build.outputTimestamp>\${git.commit.author.time}</project.build.outputTimestamp@g" parent/pom.xml
+          git config --global user.email "${{ vars.GH_BOT_EMAIL }}"
+          git config --global user.name "GitHub Action"
+          git commit -a -m "Next version ${{ env.NEXT_VERSION }}"
+          git push
