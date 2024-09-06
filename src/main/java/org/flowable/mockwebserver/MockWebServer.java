@@ -34,7 +34,7 @@ import org.microhttp.Response;
  *
  * @author Filip Hrisafov
  */
-public final class MockWebServer {
+public final class MockWebServer implements AutoCloseable {
 
     private final TestHandler handler;
     private EventLoop eventLoop;
@@ -81,6 +81,11 @@ public final class MockWebServer {
             }
             eventLoop.start();
         }
+    }
+
+    @Override
+    public void close() {
+        shutdown();
     }
 
     /**
@@ -145,7 +150,11 @@ public final class MockWebServer {
      * @param response the default response
      */
     public void defaultResponse(MockResponse response) {
-        ((QueueResponseProvider) this.handler.responseProvider).defaultResponse = response;
+        if (this.handler.responseProvider instanceof QueueResponseProvider queueResponseProvider) {
+            queueResponseProvider.defaultResponse = response;
+        } else {
+            throw new IllegalStateException("Cannot set default response when using a custom response provider");
+        }
     }
 
     /**
@@ -163,7 +172,11 @@ public final class MockWebServer {
      * @param response the response to return
      */
     public void enqueue(MockResponse response) {
-        ((QueueResponseProvider) this.handler.responseProvider).responseQueue.add(response);
+        if (this.handler.responseProvider instanceof QueueResponseProvider queueResponseProvider) {
+            queueResponseProvider.responseQueue.add(response);
+        } else {
+            throw new IllegalStateException("Cannot enqueue response when using a custom response provider");
+        }
     }
 
     /**
@@ -237,7 +250,10 @@ public final class MockWebServer {
     private static class QueueResponseProvider implements Function<RecordedRequest, MockResponse> {
 
         private final BlockingQueue<MockResponse> responseQueue = new LinkedBlockingQueue<>();
-        private MockResponse defaultResponse;
+        private MockResponse defaultResponse = MockResponse.newBuilder().status(MockHttpStatus.NOT_IMPLEMENTED)
+                .body("No response has been configured for the Mock Web Server")
+                .header("Content-Type", "text/plain")
+                .build();
 
         @Override
         public MockResponse apply(RecordedRequest recordedRequest) {

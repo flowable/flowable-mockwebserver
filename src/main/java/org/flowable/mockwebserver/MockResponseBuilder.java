@@ -214,17 +214,17 @@ public final class MockResponseBuilder {
 
     /**
      * Set the delay of the response body.
-     * The timeout needs to be greater than 0.
+     * The delay needs to be greater than 0.
      *
-     * @param timeout the timeout of the delay
-     * @param timeUnit the time unit of the timeout
+     * @param delay the delay of the response body
+     * @param timeUnit the time unit of the delay
      * @return The builder for fluent API
      */
-    public MockResponseBuilder bodyDelay(long timeout, TimeUnit timeUnit) {
-        if (timeout <= 0) {
-            throw new IllegalArgumentException("timeout must be greater than 0");
+    public MockResponseBuilder bodyDelay(long delay, TimeUnit timeUnit) {
+        if (delay <= 0) {
+            throw new IllegalArgumentException("delay must be greater than 0");
         }
-        return bodyDelay(Duration.ofMillis(TimeUnit.MILLISECONDS.convert(timeout, timeUnit)));
+        return bodyDelay(Duration.ofMillis(TimeUnit.MILLISECONDS.convert(delay, timeUnit)));
     }
 
     /**
