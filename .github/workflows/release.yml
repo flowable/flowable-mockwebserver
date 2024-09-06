@@ -9,12 +9,34 @@ on:
       next:
         description: 'Next version'
         required: false
+      sonatype_username:
+        description: 'Sonatype username'
+        required: true
+      sonatype_token:
+        description: 'Sonatype token'
+        required: true
+      gpg_passphrase:
+        description: 'GPG Passphrase'
+        required: true
 
 jobs:
   release:
     # This job has been inspired by the moditect release (https://github.com/moditect/moditect/blob/main/.github/workflows/release.yml)
     runs-on: ubuntu-latest
     steps:
+      # There are no password inputs in the workflow_dispatch event, so we need to mask them manually
+      # See https://github.com/orgs/community/discussions/12764
+      - name: Mask secrets
+        run: |
+          SONATYPE_USERNAME=$(jq -r '.inputs.sonatype_username' $GITHUB_EVENT_PATH)
+          SONATYPE_TOKEN=$(jq -r '.inputs.sonatype_token' $GITHUB_EVENT_PATH)
+          GPG_PASSPHRASE=$(jq -r '.inputs.gpg_passphrase' $GITHUB_EVENT_PATH)
+          echo ::add-mask::$SONATYPE_USERNAME
+          echo SONATYPE_USERNAME=$SONATYPE_USERNAME >> $GITHUB_ENV
+          echo ::add-mask::$SONATYPE_PASSWORD
+          echo SONATYPE_PASSWORD=$SONATYPE_PASSWORD >> $GITHUB_ENV
+          echo ::add-mask::$GPG_PASSPHRASE
+          echo GPG_PASSPHRASE=$GPG_PASSPHRASE >> $GITHUB_ENV
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -55,11 +77,11 @@ jobs:
       - name: Release
         env:
           JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          JRELEASER_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+          JRELEASER_GPG_PASSPHRASE: ${{ env.GPG_PASSPHRASE }}
           JRELEASER_GPG_PUBLIC_KEY: ${{ secrets.GPG_PUBLIC_KEY }}
           JRELEASER_GPG_SECRET_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
-          JRELEASER_NEXUS2_MAVEN_CENTRAL_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-          JRELEASER_NEXUS2_MAVEN_CENTRAL_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+          JRELEASER_NEXUS2_MAVEN_CENTRAL_USERNAME: ${{ env.SONATYPE_USERNAME }}
+          JRELEASER_NEXUS2_MAVEN_CENTRAL_PASSWORD: ${{ env.SONATYPE_PASSWORD }}
         run: |
           ./mvnw -ntp -B --file pom.xml -Pjreleaser jreleaser:release
 
