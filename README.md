@@ -7,7 +7,11 @@ Web Server for testing HTTP clients
 This library is inspired by the [OkHttp MockWebServer](https://github.com/square/okhttp/tree/master/mockwebserver).
 It allows to specify which the responses that the server should return for each request and to verify the requests that the server received.
 
-It uses a light weight webserver [Microhttp](https://github.com/ebarlas/microhttp) to handle the requests.
+The reason for creating this library is that we wanted to have a similar functionality for testing HTTP clients in Java, but without the need to include the whole OkHttp library.
+We are using a light weight webserver [Microhttp](https://github.com/ebarlas/microhttp) to handle the requests.
+The use of Microhttp limits the functionality of the server (i.e. there is no HTTPS / TLS support and not HTTP 2 support), but it is enough for our needs.
+
+There is also a different library [WireMock](http://wiremock.org/) that provides similar functionality, but that one is even more complex (with more dependencies) and has more features than we needed.
 
 ### Example
 
