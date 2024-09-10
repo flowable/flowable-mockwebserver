@@ -6,7 +6,7 @@
     <groupId>org.flowable.mockwebserver</groupId>
     <artifactId>mockwebserver</artifactId>
     <name>Flowable Mock Web Server</name>
-    <version>0.1.0</version>
+    <version>0.2.0-SNAPSHOT</version>
 
     <description>Web Server for testing HTTP clients</description>
     <url>https://github.com/flowable/flowable-mockwebserver/</url>
@@ -20,7 +20,7 @@
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <maven.compiler.release>${java.version}</maven.compiler.release>
         <!-- value comes from property git.commit.author.time -->
-        <project.build.outputTimestamp>2024-09-10T09:22:07Z</project.build.outputTimestamp>
+        <project.build.outputTimestamp>${git.commit.author.time}</project.build.outputTimestamp>
 
         <jreleaser.plugin.version>1.12.0</jreleaser.plugin.version>
 
