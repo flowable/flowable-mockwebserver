@@ -1,5 +1,11 @@
 # Flowable Mock Web Server
 
+
+[![Latest Version](https://img.shields.io/maven-central/v/org.flowable.mockwebserver/mockwebserver.svg?maxAge=3600&label=Latest%20Release)](https://central.sonatype.com/search?q=g:org.flowable.mockwebserver)
+[![License](https://img.shields.io/badge/License-Apache%202.0-yellowgreen.svg)](https://github.com/flowable/flowable-mockwebserver/blob/main/LICENSE.txt)
+
+[![Build Status](https://github.com/flowable/flowable-mockwebserver/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/flowable/flowable-mockwebserver/actions?query=branch%3Amain+workflow%3ACI)
+
 Web Server for testing HTTP clients
 
 ### Motivation
