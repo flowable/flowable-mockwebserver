@@ -19,6 +19,30 @@ The use of Microhttp limits the functionality of the server (i.e. there is no HT
 
 There is also a different library [WireMock](http://wiremock.org/) that provides similar functionality, but that one is even more complex (with more dependencies) and has more features than we needed.
 
+### Using
+
+#### Maven
+
+For Maven-based projects, add the following to your POM file in order to use the Flowable Mock Web Server (the dependencies are available at Maven Central):
+
+```xml
+<dependency>
+    <groupId>org.flowable.mockwebserver</groupId>
+    <artifactId>mockwebserver</artifactId>
+    <version>0.1.0</version>
+</dependency>
+```
+
+#### Gradle
+
+For Gradle, you need something along the following lines:
+
+```groovy
+dependencies {
+    testImplementation 'org.flowable.mockwebserver:mockwebserver:0.1.0'
+}
+```
+
 ### Example
 
 Here is a complete example
