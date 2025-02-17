@@ -202,20 +202,16 @@ It is also possible to provide a custom (non queue based) response provider.
 
 ```java
 Function<RecordedRequest, MockResponse> customResponseProvider = request -> switch (request.path()) {
-    case "/login/auth/":
-        return MockResponse.newBuilder().build();
-    case "/check/version/":
-        return MockResponse.newBuilder().body("version=9");
-    case "/pets/1":
-        return MockResponse.newBuilder().jsonBody("""
-                {
-                  "id": 1,
-                  "name": "Loki",
-                  "type": "dog"
-                }
-                """);
-    default:
-        return MockResponse.newBuilder().notFound().build();
+    case "/login/auth/" -> MockResponse.newBuilder().build();
+    case "/check/version/" -> MockResponse.newBuilder().body("version=9").build();
+    case "/pets/1" -> MockResponse.newBuilder().jsonBody("""
+            {
+              "id": 1,
+              "name": "Loki",
+              "type": "dog"
+            }
+            """).build();
+    default -> MockResponse.newBuilder().notFound().build();
 };
 ```
 
