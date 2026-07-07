@@ -185,8 +185,8 @@ class MockResponseBuilderTest {
     }
 
     @Test
-    void bodyDelayWithTimeout() throws IOException, InterruptedException {
-        server.enqueue(MockResponse.newBuilder().body("Test body").bodyDelay(1000, TimeUnit.MILLISECONDS));
+    void responseDelayWithTimeout() throws IOException, InterruptedException {
+        server.enqueue(MockResponse.newBuilder().body("Test body").responseDelay(1000, TimeUnit.MILLISECONDS));
 
         long start = System.currentTimeMillis();
         HttpResponse<String> response = httpClient.send(createRequest(), HttpResponse.BodyHandlers.ofString());
@@ -197,6 +197,39 @@ class MockResponseBuilderTest {
     }
 
     @Test
+    void responseDelayWithInvalidTimeout() {
+        assertThatThrownBy(() -> MockResponse.newBuilder().responseDelay(0, TimeUnit.MILLISECONDS))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("delay must be greater than 0");
+        assertThatThrownBy(() -> MockResponse.newBuilder().responseDelay(-10, TimeUnit.MILLISECONDS))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("delay must be greater than 0");
+    }
+
+    @Test
+    void responseDelayWithDuration() throws IOException, InterruptedException {
+        server.enqueue(MockResponse.newBuilder().body("Test body").responseDelay(Duration.ofSeconds(1)));
+
+        long start = System.currentTimeMillis();
+        HttpResponse<String> response = httpClient.send(createRequest(), HttpResponse.BodyHandlers.ofString());
+        long end = System.currentTimeMillis();
+
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(end - start).isGreaterThanOrEqualTo(1000);
+    }
+
+    @Test
+    void responseDelayWithInvalidDuration() {
+        assertThatThrownBy(() -> MockResponse.newBuilder().responseDelay(Duration.ZERO))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("delay must be positive");
+        assertThatThrownBy(() -> MockResponse.newBuilder().responseDelay(Duration.ofSeconds(-10)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("delay must be positive");
+    }
+
+    @Test
+    @SuppressWarnings("deprecation")
     void bodyDelayWithInvalidTimeout() {
         assertThatThrownBy(() -> MockResponse.newBuilder().bodyDelay(0, TimeUnit.MILLISECONDS))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -207,7 +240,19 @@ class MockResponseBuilderTest {
     }
 
     @Test
-    void bodyDelayWithDuration() throws IOException, InterruptedException {
+    @SuppressWarnings("deprecation")
+    void bodyDelayWithInvalidDuration() {
+        assertThatThrownBy(() -> MockResponse.newBuilder().bodyDelay(Duration.ZERO))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("delay must be positive");
+        assertThatThrownBy(() -> MockResponse.newBuilder().bodyDelay(Duration.ofSeconds(-10)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("delay must be positive");
+    }
+
+    @Test
+    @SuppressWarnings("deprecation")
+    void bodyDelayIsAliasForResponseDelay() throws IOException, InterruptedException {
         server.enqueue(MockResponse.newBuilder().body("Test body").bodyDelay(Duration.ofSeconds(1)));
 
         long start = System.currentTimeMillis();
@@ -216,16 +261,6 @@ class MockResponseBuilderTest {
 
         assertThat(response.statusCode()).isEqualTo(200);
         assertThat(end - start).isGreaterThanOrEqualTo(1000);
-    }
-
-    @Test
-    void bodyDelayWithInvalidDuration() {
-        assertThatThrownBy(() -> MockResponse.newBuilder().bodyDelay(Duration.ZERO))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("delay must be positive");
-        assertThatThrownBy(() -> MockResponse.newBuilder().bodyDelay(Duration.ofSeconds(-10)))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("delay must be positive");
     }
 
     protected HttpRequest createRequest() {

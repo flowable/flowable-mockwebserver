@@ -39,6 +39,7 @@ public final class MockWebServer implements AutoCloseable {
     private final TestHandler handler;
     private EventLoop eventLoop;
     private Options options;
+    private final ResponseDelayScheduler delayScheduler = new ResponseDelayScheduler();
 
     /**
      * Create a new mock webserver with a queue based response provider.
@@ -53,7 +54,7 @@ public final class MockWebServer implements AutoCloseable {
      * @param responseProvider the custom response provider
      */
     public MockWebServer(Function<RecordedRequest, MockResponse> responseProvider) {
-        this.handler = new TestHandler(responseProvider);
+        this.handler = new TestHandler(responseProvider, delayScheduler);
     }
 
     /**
@@ -79,6 +80,7 @@ public final class MockWebServer implements AutoCloseable {
             } catch (IOException e) {
                 throw new UncheckedIOException("Failed to start server", e);
             }
+            delayScheduler.start();
             eventLoop.start();
         }
     }
@@ -104,7 +106,7 @@ public final class MockWebServer implements AutoCloseable {
             throw new RuntimeException(e);
         }
         eventLoop = null;
-
+        delayScheduler.shutdown();
     }
 
     /**
@@ -225,9 +227,14 @@ public final class MockWebServer implements AutoCloseable {
 
     /**
      * Clear all requests and responses that were received by the server.
+     * This clears all recorded requests and enqueued responses, cancels any pending
+     * delayed responses and resets the request count to 0.
+     * The configured default response is left untouched.
      */
     public void clearRequestsAndResponses() {
         handler.requestQueue.clear();
+        handler.requestCount.set(0);
+        delayScheduler.cancelPending();
         Function<RecordedRequest, MockResponse> responseProvider = handler.responseProvider;
         if (responseProvider instanceof QueueResponseProvider queueResponseProvider) {
             queueResponseProvider.responseQueue.clear();
@@ -270,9 +277,11 @@ public final class MockWebServer implements AutoCloseable {
         private final Function<RecordedRequest, MockResponse> responseProvider;
         private final BlockingQueue<RecordedRequest> requestQueue = new LinkedBlockingQueue<>();
         private final AtomicLong requestCount = new AtomicLong(0);
+        private final ResponseDelayScheduler delayScheduler;
 
-        private TestHandler(Function<RecordedRequest, MockResponse> responseProvider) {
+        private TestHandler(Function<RecordedRequest, MockResponse> responseProvider, ResponseDelayScheduler delayScheduler) {
             this.responseProvider = responseProvider;
+            this.delayScheduler = delayScheduler;
         }
 
         @Override
@@ -289,19 +298,10 @@ public final class MockWebServer implements AutoCloseable {
         private void handle(MockResponse response, Consumer<Response> callback) {
             Duration delay = response.delay;
             if (delay != null) {
-                long sleep = delay.toMillis();
-                if (sleep > 0) {
-                    try {
-                        Thread.sleep(sleep);
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        throw new RuntimeException(e);
-                    }
-                }
+                delayScheduler.schedule(() -> callback.accept(response.response), delay);
+            } else {
+                callback.accept(response.response);
             }
-
-            callback.accept(response.response);
-
         }
 
         private long requestCount() {

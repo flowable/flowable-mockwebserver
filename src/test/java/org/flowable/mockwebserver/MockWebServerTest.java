@@ -13,6 +13,7 @@
 package org.flowable.mockwebserver;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.entry;
 
 import java.io.IOException;
@@ -20,6 +21,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.net.http.HttpTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Collections;
@@ -135,13 +137,14 @@ class MockWebServerTest {
 
             assertThat(server.requestCount()).isEqualTo(1);
             server.clearRequestsAndResponses();
+            assertThat(server.requestCount()).isEqualTo(0);
 
             response = httpClient.send(HttpRequest.newBuilder()
                     .GET()
                     .uri(URI.create(server.url()))
                     .build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             assertThat(response.statusCode()).isEqualTo(501);
-            assertThat(server.requestCount()).isEqualTo(2);
+            assertThat(server.requestCount()).isEqualTo(1);
 
             assertThat(server.takeRequest()).isNotNull();
             assertThat(server.takeRequest()).isNull();
@@ -187,6 +190,56 @@ class MockWebServerTest {
             end = System.currentTimeMillis();
             assertThat(request).isNull();
             assertThat(end - start).isGreaterThanOrEqualTo(1000);
+        }
+    }
+
+    @Test
+    void closeDoesNotWaitForPendingDelayedResponse() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        try {
+            server.start();
+            server.enqueue(MockResponse.newBuilder().body("Slow").responseDelay(Duration.ofSeconds(10)));
+
+            HttpClient httpClient = HttpClient.newHttpClient();
+            assertThatThrownBy(() -> httpClient.send(HttpRequest.newBuilder()
+                    .GET()
+                    .uri(URI.create(server.url()))
+                    .timeout(Duration.ofMillis(200))
+                    .build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8)))
+                    .isInstanceOf(HttpTimeoutException.class);
+
+            long start = System.currentTimeMillis();
+            server.close();
+            long end = System.currentTimeMillis();
+
+            assertThat(end - start).isLessThan(2000);
+        } finally {
+            server.close();
+        }
+    }
+
+    @Test
+    void clearRequestsAndResponsesCancelsPendingDelayedResponse() throws IOException, InterruptedException {
+        try (MockWebServer server = new MockWebServer()) {
+            server.start();
+            server.enqueue(MockResponse.newBuilder().body("Slow").responseDelay(Duration.ofSeconds(10)));
+            HttpClient httpClient = HttpClient.newHttpClient();
+
+            assertThatThrownBy(() -> httpClient.send(HttpRequest.newBuilder()
+                    .GET()
+                    .uri(URI.create(server.url()))
+                    .timeout(Duration.ofMillis(200))
+                    .build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8)))
+                    .isInstanceOf(HttpTimeoutException.class);
+
+            server.clearRequestsAndResponses();
+
+            HttpResponse<String> response = httpClient.send(HttpRequest.newBuilder()
+                    .GET()
+                    .uri(URI.create(server.url()))
+                    .timeout(Duration.ofSeconds(2))
+                    .build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            assertThat(response.statusCode()).isEqualTo(501);
         }
     }
 }

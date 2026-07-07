@@ -175,7 +175,7 @@ Responses can also be throttled, to simulate a slow network.
 ```java
 MockResponse response = MockResponse.newBuilder()
         .jsonBody("{}")
-        .bodyDelay(Duration.ofSeconds(2))
+        .responseDelay(Duration.ofSeconds(2))
         .build();
 ```
 
