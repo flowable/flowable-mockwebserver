@@ -213,33 +213,66 @@ public final class MockResponseBuilder {
     }
 
     /**
-     * Set the delay of the response body.
+     * Set the delay before the response is sent.
+     * The delay applies to the whole response (time-to-first-byte): the server stays
+     * silent for the delay and then sends the status line, headers and body together.
+     * This can be used to test that a client cancels or times out a slow request.
      * The delay needs to be greater than 0.
      *
-     * @param delay the delay of the response body
+     * @param delay the delay before the response is sent
      * @param timeUnit the time unit of the delay
      * @return The builder for fluent API
      */
-    public MockResponseBuilder bodyDelay(long delay, TimeUnit timeUnit) {
+    public MockResponseBuilder responseDelay(long delay, TimeUnit timeUnit) {
         if (delay <= 0) {
             throw new IllegalArgumentException("delay must be greater than 0");
         }
-        return bodyDelay(Duration.ofMillis(TimeUnit.MILLISECONDS.convert(delay, timeUnit)));
+        return responseDelay(Duration.ofMillis(TimeUnit.MILLISECONDS.convert(delay, timeUnit)));
     }
 
     /**
-     * Set the delay of the response body.
+     * Set the delay before the response is sent.
+     * The delay applies to the whole response (time-to-first-byte): the server stays
+     * silent for the delay and then sends the status line, headers and body together.
+     * This can be used to test that a client cancels or times out a slow request.
      * The delay must be positive.
      *
-     * @param delay the delay of the response body
+     * @param delay the delay before the response is sent
      * @return The builder for fluent API
      */
-    public MockResponseBuilder bodyDelay(Duration delay) {
+    public MockResponseBuilder responseDelay(Duration delay) {
         if (delay.isNegative() || delay.isZero()) {
             throw new IllegalArgumentException("delay must be positive");
         }
         this.delay = delay;
         return this;
+    }
+
+    /**
+     * Set the delay before the response is sent.
+     * The delay needs to be greater than 0.
+     *
+     * @param delay the delay before the response is sent
+     * @param timeUnit the time unit of the delay
+     * @return The builder for fluent API
+     * @deprecated use {@link #responseDelay(long, TimeUnit)} instead; the delay applies to the whole response, not only the body
+     */
+    @Deprecated
+    public MockResponseBuilder bodyDelay(long delay, TimeUnit timeUnit) {
+        return responseDelay(delay, timeUnit);
+    }
+
+    /**
+     * Set the delay before the response is sent.
+     * The delay must be positive.
+     *
+     * @param delay the delay before the response is sent
+     * @return The builder for fluent API
+     * @deprecated use {@link #responseDelay(Duration)} instead; the delay applies to the whole response, not only the body
+     */
+    @Deprecated
+    public MockResponseBuilder bodyDelay(Duration delay) {
+        return responseDelay(delay);
     }
 
     /**

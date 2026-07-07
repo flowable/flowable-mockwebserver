@@ -1,1 +1,3 @@
-First release of Flowable Mock Web Server, a Web Server for testing HTTP clients
+- Response delays are now non-blocking and no longer stall the server or delay its shutdown
+- Renamed `MockResponseBuilder.bodyDelay(...)` to `responseDelay(...)` to reflect that it delays the whole response; `bodyDelay(...)` is kept as a deprecated alias
+- `clearRequestsAndResponses()` now cancels pending delayed responses and resets the request count
