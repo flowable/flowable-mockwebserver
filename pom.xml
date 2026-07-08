@@ -22,7 +22,7 @@
         <!-- value comes from property git.commit.author.time -->
         <project.build.outputTimestamp>${git.commit.author.time}</project.build.outputTimestamp>
 
-        <jreleaser.plugin.version>1.25.0</jreleaser.plugin.version>
+        <jreleaser.plugin.version>1.23.0</jreleaser.plugin.version>
 
         <assertj.version>3.27.7</assertj.version>
         <microhttp.version>0.11</microhttp.version>
